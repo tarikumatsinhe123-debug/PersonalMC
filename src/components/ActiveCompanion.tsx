@@ -22,6 +22,11 @@ import {
 } from "lucide-react";
 import PromptTips from "./PromptTips";
 import { motion, AnimatePresence } from "motion/react";
+import {
+  callGeminiDirectClient,
+  generateLocalWelcome,
+  generateLocalChatReply
+} from "../lib/companionFallback";
 
 interface ActiveCompanionProps {
   profile: UserProfile;
@@ -110,6 +115,9 @@ export default function ActiveCompanion({
       // If we already have conversation and it's long, let's welcome back.
       // Or if it is a fresh session with a custom topic, greet.
       setIsLoading(true);
+      let welcomeText = "";
+
+      // 1. Try Express backend endpoint first
       try {
         const response = await fetch("/api/welcome", {
           method: "POST",
@@ -119,31 +127,56 @@ export default function ActiveCompanion({
             profile: profile,
           }),
         });
-        const data = await response.json();
-        if (data.text) {
-          // Add a welcome companion message if no session message pair exists,
-          // or if the last message isn't already a companion greeting.
-          setMessages((prev) => {
-            if (prev.length === 0 || prev[prev.length - 1].role === "user") {
-              return [
-                ...prev,
-                {
-                  id: "welcome-" + Date.now(),
-                  role: "companion",
-                  content: data.text,
-                  timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-                },
-              ];
-            }
-            return prev;
-          });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.text) {
+            welcomeText = data.text;
+          }
         }
       } catch (err) {
-        console.error("Failed to fetch welcome message:", err);
-      } finally {
-        setIsLoading(false);
-        setHasDoneWelcomeCheck(true);
+        console.warn("Backend welcome endpoint failed or unavailable. Falling back to client-side.", err);
       }
+
+      // 2. Try direct client-side Gemini call if client API key is configured
+      const clientApiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+      if (!welcomeText && clientApiKey) {
+        try {
+          welcomeText = await callGeminiDirectClient({
+            apiKey: clientApiKey,
+            type: "welcome",
+            profile,
+            messages
+          });
+        } catch (geminiErr) {
+          console.error("Direct browser Gemini welcome failed:", geminiErr);
+        }
+      }
+
+      // 3. Fallback to highly-polished local generated vibe-matching reply
+      if (!welcomeText) {
+        welcomeText = generateLocalWelcome(profile, messages);
+      }
+
+      if (welcomeText) {
+        // Add a welcome companion message if no session message pair exists,
+        // or if the last message isn't already a companion greeting.
+        setMessages((prev) => {
+          if (prev.length === 0 || prev[prev.length - 1].role === "user") {
+            return [
+              ...prev,
+              {
+                id: "welcome-" + Date.now(),
+                role: "companion",
+                content: welcomeText,
+                timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+              },
+            ];
+          }
+          return prev;
+        });
+      }
+      setIsLoading(false);
+      setHasDoneWelcomeCheck(true);
     };
 
     requestWelcomeMessage();
@@ -185,32 +218,62 @@ export default function ActiveCompanion({
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
-          profile: profile,
-        }),
-      });
+      let replyText = "";
 
-      if (!response.ok) {
-        const errData = await response.json();
-        throw new Error(errData.error || "Failed to communicate with friend server");
+      // 1. Try Express backend endpoint first
+      try {
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            messages: updatedMessages.map((m) => ({ role: m.role, content: m.content })),
+            profile: profile,
+          }),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.text) {
+            replyText = data.text;
+          }
+        } else {
+          console.warn("Express backend chat endpoint returned status error, initiating client fallbacks.");
+        }
+      } catch (apiErr) {
+        console.warn("Express backend chat API disconnected or unavailable, trying client fallbacks.", apiErr);
       }
 
-      const data = await response.json();
+      // 2. Direct browser REST invocation if VITE_GEMINI_API_KEY is supplied
+      const clientApiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+      if (!replyText && clientApiKey) {
+        try {
+          replyText = await callGeminiDirectClient({
+            apiKey: clientApiKey,
+            type: "chat",
+            profile,
+            messages: updatedMessages
+          });
+        } catch (geminiErr) {
+          console.error("Direct browser Gemini chat request failed:", geminiErr);
+        }
+      }
+
+      // 3. Fallback to highly empathetic local contextual responder matching their active vibe companion
+      if (!replyText) {
+        replyText = generateLocalChatReply(profile, updatedMessages);
+      }
+
       const companionMsg: Message = {
         id: "rep-" + Date.now(),
         role: "companion",
-        content: data.text,
+        content: replyText,
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       };
 
       setMessages((prev) => [...prev, companionMsg]);
     } catch (err: any) {
       console.error(err);
-      setErrorText(err.message || "Oops, couldn't send the message. Are you connected?");
+      setErrorText("Oops, I encountered a connection issue. Are you online?");
     } finally {
       setIsLoading(false);
     }
