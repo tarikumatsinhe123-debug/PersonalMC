@@ -1,0 +1,6 @@
+{
+  "name": "Mental Wellness Companion",
+  "description": "A supportive, down-to-earth personal mental wellness companion that listens to your feelings and supports you like a close, empathetic friend.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

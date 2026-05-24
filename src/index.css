@@ -1,0 +1,31 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+}
+
+/* Custom continuous background paper grain effect */
+body {
+  background-color: #F5F5F0;
+  color: #4A4A3A;
+  font-family: var(--font-sans);
+}
+
+/* Base custom styles to ensure pure Natural Tones feel */
+.natural-bg {
+  background-color: #F5F5F0;
+}
+
+.text-natural {
+  color: #4A4A3A;
+}
+
+.text-natural-dark {
+  color: #3A3A2A;
+}
+
+.border-natural {
+  border-color: #E0E0D5;
+}
