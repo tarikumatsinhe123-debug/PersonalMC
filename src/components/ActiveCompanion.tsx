@@ -52,6 +52,7 @@ export default function ActiveCompanion({
   const [editName, setEditName] = useState(profile.name);
   const [editVibe, setEditVibe] = useState(profile.vibe);
   const [editTopic, setEditTopic] = useState(profile.customTopic || "");
+  const [editApiKey, setEditApiKey] = useState(() => localStorage.getItem("user_gemini_api_key") || "");
 
   // Interactive Exercises State
   const [activeExercise, setActiveExercise] = useState<"none" | "breathing" | "grounding">("none");
@@ -141,7 +142,7 @@ export default function ActiveCompanion({
       }
 
       // 2. Try direct client-side Gemini call if client API key is configured
-      const clientApiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+      const clientApiKey = localStorage.getItem("user_gemini_api_key") || (import.meta as any).env?.VITE_GEMINI_API_KEY;
       if (!welcomeText && clientApiKey) {
         try {
           welcomeText = await callGeminiDirectClient({
@@ -246,8 +247,8 @@ export default function ActiveCompanion({
         console.warn("Express backend chat API disconnected or unavailable, trying client fallbacks.", apiErr);
       }
 
-      // 2. Direct browser REST invocation if VITE_GEMINI_API_KEY is supplied
-      const clientApiKey = (import.meta as any).env?.VITE_GEMINI_API_KEY;
+      // 2. Direct browser REST invocation if VITE_GEMINI_API_KEY is supplied or set by user
+      const clientApiKey = localStorage.getItem("user_gemini_api_key") || (import.meta as any).env?.VITE_GEMINI_API_KEY;
       if (!replyText && clientApiKey) {
         try {
           replyText = await callGeminiDirectClient({
@@ -285,6 +286,7 @@ export default function ActiveCompanion({
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editName.trim()) return;
+    localStorage.setItem("user_gemini_api_key", editApiKey.trim());
     setProfile({
       ...profile,
       name: editName.trim(),
@@ -1020,6 +1022,23 @@ export default function ActiveCompanion({
                       rows={2}
                       className="w-full px-4 py-3 rounded-[20px] border border-[#E0E0D5] bg-white text-[#4A4A3A] focus:outline-none focus:ring-1 focus:ring-[#5A6A4A] focus:border-[#5A6A4A] placeholder:text-[#8C8C7B] text-sm"
                     />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-xs font-bold uppercase tracking-widest text-[#8C8C7B]">
+                      Personal Gemini API Key (Optional)
+                    </label>
+                    <input
+                      id="edit-inp-apikey"
+                      type="password"
+                      value={editApiKey}
+                      onChange={(e) => setEditApiKey(e.target.value)}
+                      placeholder="Starts with AIzaSy..."
+                      className="w-full px-4 py-3 rounded-[20px] border border-[#E0E0D5] bg-white text-[#4A4A3A] focus:outline-none focus:ring-1 focus:ring-[#5A6A4A] focus:border-[#5A6A4A] placeholder:text-[#8C8C7B] text-xs font-mono"
+                    />
+                    <p className="text-[10px] text-[#8C8C7B] leading-relaxed">
+                      Optional override. Stored 100% locally in your browser. Perfect for offline fallback survival or custom deployments like GitHub Pages where backends aren't present!
+                    </p>
                   </div>
 
                   <div className="space-y-3">
