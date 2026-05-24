@@ -62,6 +62,9 @@ export default function ActiveCompanion({
   // Crisis Modal State
   const [showSafetyModal, setShowSafetyModal] = useState(false);
 
+  // About App Modal State
+  const [showAboutModal, setShowAboutModal] = useState(false);
+
   // Mobile Menu Drawer State
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -448,6 +451,15 @@ export default function ActiveCompanion({
         {/* Bottom Safety Info Bar */}
         <div className="mt-6 md:mt-0 space-y-3">
           <button
+            id="btn-about-trigger"
+            onClick={() => setShowAboutModal(true)}
+            className="flex items-center gap-2.5 w-full justify-center py-2.5 px-4 rounded-[20px] border border-[#E0E0D5] bg-white hover:bg-[#F5F5F0]/60 text-[#5A6A4A] font-bold text-xs cursor-pointer transition-all shadow-sm"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            About App
+          </button>
+
+          <button
             id="btn-safety-trigger"
             onClick={() => setShowSafetyModal(true)}
             className="flex items-center gap-2.5 w-full justify-center py-2.5 px-4 rounded-[20px] border border-[#E2D8D0] bg-[#F2E8E0] hover:bg-[#EBE0D8] text-[#8A5A4A] font-bold text-xs cursor-pointer transition-all shadow-sm"
@@ -625,6 +637,18 @@ export default function ActiveCompanion({
               </div>
 
               <div className="mt-6 space-y-3">
+                <button
+                  id="btn-m-about-trigger"
+                  onClick={() => {
+                    setShowAboutModal(true);
+                    setIsMenuOpen(false);
+                  }}
+                  className="flex items-center gap-2.5 w-full justify-center py-2.5 px-4 rounded-[20px] border border-[#E0E0D5] bg-white hover:bg-[#F5F5F0]/60 text-[#5A6A4A] font-bold text-xs cursor-pointer transition-all shadow-sm"
+                >
+                  <HelpCircle className="w-3.5 h-3.5" />
+                  About App
+                </button>
+
                 <button
                   id="btn-m-safety"
                   onClick={() => {
@@ -1158,6 +1182,89 @@ export default function ActiveCompanion({
                   className="px-5 py-2.5 bg-[#5A6A4A] text-white hover:bg-[#4A5A3A] rounded-[20px] font-bold text-xs shadow-sm cursor-pointer transition-all"
                 >
                   Okay, understood
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* About App Modal */}
+      <AnimatePresence>
+        {showAboutModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowAboutModal(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-[1px]"
+            />
+            {/* Box */}
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="w-full max-w-md bg-white rounded-[32px] border border-[#E0E0D5] shadow-lg p-6 relative z-10 space-y-5 text-[#4A4A3A]"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex gap-3 items-center text-[#5A6A4A]">
+                  <span className="p-2 bg-[#E8EDE0] rounded-xl border border-[#E0E0D5]">
+                    <HelpCircle className="w-6 h-6 text-[#5A6A4A]" />
+                  </span>
+                  <div>
+                    <h3 className="font-serif italic text-xl text-[#3A3A2A]">
+                      About QuietSpace
+                    </h3>
+                    <p className="text-xs text-[#8C8C7B] font-semibold mt-0.5">
+                      Personal Mental Wellness Companion
+                    </p>
+                  </div>
+                </div>
+                <button
+                  id="btn-close-about"
+                  onClick={() => setShowAboutModal(false)}
+                  className="p-1 rounded-lg hover:bg-[#F5F5F0] text-[#8C8C7B]"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-4 text-sm text-[#4A4A3A] leading-relaxed">
+                <p>
+                  QuietSpace is a peaceful sanctuary designed to support mental well-being, ground your thoughts, and help you navigate stressful moments through warm companion guidance, breathing paces, and mental exercises.
+                </p>
+
+                <div className="p-4 rounded-[24px] bg-[#F5F5F0] border border-[#E0E0D5] space-y-3">
+                  <h4 className="font-bold text-[#8C8C7B] text-xs uppercase tracking-widest">
+                    Creator Information
+                  </h4>
+                  <div className="space-y-2">
+                    <p className="text-sm">
+                      <span className="text-xs text-[#8C8C7B] font-medium block">Created By:</span>
+                      <strong className="text-[#3A3A2A] font-bold">Tariku Matsinhe</strong>
+                    </p>
+                    <p className="text-sm">
+                      <span className="text-xs text-[#8C8C7B] font-medium block">Contact / Email:</span>
+                      <a 
+                        href="mailto:tariku.matsinhe123@gmail.com" 
+                        className="text-[#5A6A4A] hover:underline font-bold"
+                      >
+                        tariku.matsinhe123@gmail.com
+                      </a>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  id="btn-about-close-footer"
+                  onClick={() => setShowAboutModal(false)}
+                  className="px-5 py-2.5 bg-[#5A6A4A] text-white hover:bg-[#4A5A3A] rounded-[20px] font-bold text-xs shadow-sm cursor-pointer transition-all"
+                >
+                  Close
                 </button>
               </div>
             </motion.div>

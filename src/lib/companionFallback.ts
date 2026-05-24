@@ -11,7 +11,7 @@ interface DirectClientParams {
 }
 
 export async function callGeminiDirectClient({ apiKey, type, profile, messages }: DirectClientParams): Promise<string> {
-  const model = "gemini-1.5-flash"; // highly browser-compatible, ultra-fast and stable
+  const model = "gemini-1.5-flash"; // highly stable, compatible browser-side REST model to prevent 404 errors
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
   const currentVibe = profile.vibe || "chill";

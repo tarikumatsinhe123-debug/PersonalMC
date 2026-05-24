@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
+import { generateLocalChatReply, generateLocalWelcome } from "./src/lib/companionFallback.ts";
 
 dotenv.config();
 
@@ -113,8 +114,25 @@ STRICT RULES FOR EVERY RESPONSE:
       const responseText = response.text || "I'm here for you. What's on your mind?";
       res.json({ text: responseText });
     } catch (error: any) {
-      console.error("Error in chat endpoint:", error);
-      res.status(500).json({ error: error.message || "Something went wrong on the server." });
+      const isQuotaExceeded = error?.status === 429 || 
+                              (error?.message && error.message.includes("429")) || 
+                              (error?.message && error.message.toLowerCase().includes("quota"));
+
+      if (isQuotaExceeded) {
+        console.warn("Notice: Gemini API key has hit standard daily usage quotas (429 limit). Gracefully utilizing the local high-fidelity emotional fallback framework.");
+      } else {
+        console.error("Error in chat endpoint - falling back:", error);
+      }
+
+      try {
+        const clientProfile = req.body.profile || { name: "friend", vibe: "chill" };
+        const localFallbackReply = generateLocalChatReply(clientProfile, req.body.messages || []);
+        console.log("Gracefully recovered chat using server-side local fallback:", localFallbackReply);
+        res.json({ text: localFallbackReply, fallbackUsed: true });
+      } catch (fallbackErr) {
+        console.error("Critical: server-side local fallback generation failed:", fallbackErr);
+        res.status(500).json({ error: error.message || "Something went wrong on the server." });
+      }
     }
   });
 
@@ -166,10 +184,27 @@ Based on this, generate a warm follow-up greeting. Check in on how they are doin
         response.text || `Hey ${clientProfile.name}, welcome back! How are you holding up today?`;
       res.json({ text: responseText });
     } catch (error: any) {
-      console.error("Error in welcome endpoint:", error);
-      res.json({
-        text: `Hey ${req.body?.profile?.name || "there"}! Good to see you again. Tell me, how are you holding up?`,
-      });
+      const isQuotaExceeded = error?.status === 429 || 
+                              (error?.message && error.message.includes("429")) || 
+                              (error?.message && error.message.toLowerCase().includes("quota"));
+
+      if (isQuotaExceeded) {
+        console.warn("Notice: Gemini API key has hit standard daily usage welcome greeting limitations (429 limit). Gracefully invoking the local personalized welcome framework.");
+      } else {
+        console.error("Error in welcome endpoint - falling back:", error);
+      }
+
+      try {
+        const clientProfile = req.body.profile || { name: "friend", vibe: "chill" };
+        const localFallbackWelcome = generateLocalWelcome(clientProfile, req.body.history || []);
+        console.log("Gracefully recovered welcome using server-side local fallback:", localFallbackWelcome);
+        res.json({ text: localFallbackWelcome, fallbackUsed: true });
+      } catch (fallbackErr) {
+        console.error("Critical: server-side local fallback welcome generation failed:", fallbackErr);
+        res.json({
+          text: `Hey ${req.body?.profile?.name || "there"}! Good to see you again. Tell me, how are you holding up?`,
+        });
+      }
     }
   });
 

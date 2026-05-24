@@ -176,6 +176,15 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
           </button>
         </form>
       </motion.div>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 0.8 }}
+        transition={{ delay: 0.5 }}
+        className="text-xs text-[#8C8C7B] mt-6 text-center font-medium"
+      >
+        Created by <span className="font-bold text-[#4A4A3A]">Tariku Matsinhe</span> • <a href="mailto:tariku.matsinhe123@gmail.com" className="underline hover:text-[#5A6A4A] transition-all">tariku.matsinhe123@gmail.com</a>
+      </motion.p>
     </div>
   );
 }
